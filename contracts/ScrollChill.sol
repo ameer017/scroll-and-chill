@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import Counter from "./Counter"
+import "./Counter.sol";
 
 contract ScrollChill is ERC721 {
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _tokenIds;
+    Counter private counter; 
     address public owner;
     IERC20 public rewardToken;
 
@@ -25,27 +23,44 @@ contract ScrollChill is ERC721 {
     }
 
     mapping(uint256 => WatchParty) public watchParties;
-    Counters.Counter private partyIds;
+    uint256 private _tokenIds;
+    uint256 private partyIds; 
 
     event WatchPartyCreated(uint256 partyId, address host, string title, uint256 time);
     event VoteCast(uint256 partyId, string movieTitle, address voter);
     event WatchPartyClosed(uint256 partyId, string winningMovie);
     event NFTMinted(address to, uint256 tokenId);
 
-    constructor(address _rewardToken) ERC721("ScrollChillNFT", "SCNFT") {
+    constructor(int256 initialCount, address _rewardToken) 
+        ERC721("ScrollChillNFT", "SCNFT") 
+    {
         owner = msg.sender;
         rewardToken = IERC20(_rewardToken);
+        counter = new Counter(initialCount);
+            }
+
+    function incrementCounter() public {
+        counter.increment();
     }
 
-    function createWatchParty(
-        string memory _title, 
-        uint256 _partyTime, 
-        string[] memory _movieOptions
-    ) public {
+    function decrementCounter() public {
+        counter.decrement();
+    }
+
+    function resetCounter() public {
+        counter.reset();
+    }
+
+    function getCounterValue() public view returns (int256) {
+        return counter.getCount();
+    }
+
+    // Watch party functions
+    function createWatchParty(string memory _title, uint256 _partyTime, string[] memory _movieOptions) public {
         require(_partyTime > block.timestamp, "Party time must be in the future");
 
-        partyIds.increment();
-        uint256 newPartyId = partyIds.current();
+        partyIds++; // Increment party ID
+        uint256 newPartyId = partyIds;
 
         WatchParty storage newParty = watchParties[newPartyId];
         newParty.title = _title;
@@ -106,8 +121,8 @@ contract ScrollChill is ERC721 {
     }
 
     function mintNFTForParty(address participant) internal returns (uint256) {
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
+        _tokenIds++; // Increment your token ID counter
+        uint256 newTokenId = _tokenIds;
 
         _mint(participant, newTokenId);
         emit NFTMinted(participant, newTokenId);
