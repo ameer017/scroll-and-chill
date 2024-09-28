@@ -4,6 +4,8 @@ import Header from "./component/Header";
 import { Routes, Route } from "react-router-dom";
 import Home from "./component/Home";
 import CreateParty from "./pages/CreateParty";
+import PartyList from "./component/PartyList";
+import PartyDetails from "./component/PartyDetails";
 
 const App = () => {
   return (
@@ -14,7 +16,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/create" element={<CreateParty />} />
-            {/* Add more routes as needed */}
+            <Route path="/party-list" element={<PartyList />} />
+            <Route path="/party-details/:title" element={<PartyDetails />} />
           </Routes>
         </main>
       </div>

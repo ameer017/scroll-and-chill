@@ -1,9 +1,93 @@
-import React from 'react'
+import { useState, useContext } from "react";
+import { Web3Context } from "../context/Web3Context";
+import { useNavigate } from "react-router-dom";
 
 const CreateParty = () => {
-  return (
-    <div>CreateParty</div>
-  )
-}
+  const { contract, account } = useContext(Web3Context);
+  const [title, setTitle] = useState("");
+  const [partyTime, setPartyTime] = useState("");
+  const [movieOptions, setMovieOptions] = useState("");
+  const [loading, setLoading] = useState(false);
 
-export default CreateParty
+  const navigate = useNavigate();
+
+  const createParty = async (e) => {
+    e.preventDefault();
+
+    if (!contract) {
+      alert("Smart contract is not initialized!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Split and trim movie options into an array
+      const movieList = movieOptions.split(",").map((movie) => movie.trim());
+
+      const partyTimestamp = Math.floor(new Date(partyTime).getTime() / 1000);
+
+      const tx = await contract.createWatchParty(
+        title,
+        partyTimestamp,
+        movieList
+      );
+      await tx.wait();
+
+      // Log the movie list to the console
+      console.log("Created Party Details:", {
+        title,
+        partyTime: partyTimestamp,
+        movieOptions: movieList,
+      });
+      alert("Party created successfully!");
+      // Optionally navigate to party list
+      // navigate("/party-list");
+    } catch (error) {
+      console.error("Error creating party:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <h1 className="text-2xl font-bold mb-6">Create a Watch Party</h1>
+      <form className="w-full max-w-lg" onSubmit={createParty}>
+        <input
+          className="w-full mb-4 p-2 border border-gray-300 rounded"
+          type="text"
+          placeholder="Party Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        <input
+          className="w-full mb-4 p-2 border border-gray-300 rounded"
+          type="datetime-local"
+          placeholder="Party Time"
+          value={partyTime}
+          onChange={(e) => setPartyTime(e.target.value)}
+          required
+        />
+        <input
+          className="w-full mb-4 p-2 border border-gray-300 rounded"
+          type="text"
+          placeholder="Movie Options (comma-separated)"
+          value={movieOptions}
+          onChange={(e) => setMovieOptions(e.target.value)}
+          required
+        />
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Creating..." : "Create Party"}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default CreateParty;

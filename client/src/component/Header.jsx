@@ -20,8 +20,8 @@ const Header = () => {
             </a>
           </li>
           <li>
-            <a href="/about" className="hover:underline">
-              About
+            <a href="/party-list" className="hover:underline">
+              PartyList
             </a>
           </li>
         </ul>
