@@ -40,19 +40,6 @@ const WalletConnect = () => {
     }
   };
 
-  const getCounterValue = async () => {
-    if (contract) {
-      try {
-        const value = await contract.getCounterValue();
-        setCount(value.toString());
-      } catch (error) {
-        console.error("Error fetching counter value:", error);
-      }
-    } else {
-      alert("Contract is not initialized");
-    }
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <button
@@ -66,19 +53,7 @@ const WalletConnect = () => {
           : "Connect Wallet"}
       </button>
 
-      {account && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-semibold">
-            Current Counter Value: {count}
-          </h2>
-          <button
-            className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
-            onClick={getCounterValue}
-          >
-            Get Counter Value
-          </button>
-        </div>
-      )}
+      {account && <div className="mt-8"></div>}
     </div>
   );
 };

@@ -8,6 +8,7 @@ const CreateParty = () => {
   const [partyTime, setPartyTime] = useState("");
   const [movieOptions, setMovieOptions] = useState("");
   const [loading, setLoading] = useState(false);
+  const [partyId, setPartyId] = useState(null); // Store the party ID after creation
 
   const navigate = useNavigate();
 
@@ -19,32 +20,46 @@ const CreateParty = () => {
       return;
     }
 
+    if (new Date(partyTime) <= new Date()) {
+      alert("Party time must be in the future.");
+      return;
+    }
+
     try {
       setLoading(true);
 
       // Split and trim movie options into an array
       const movieList = movieOptions.split(",").map((movie) => movie.trim());
 
+      // Convert party time to Unix timestamp
       const partyTimestamp = Math.floor(new Date(partyTime).getTime() / 1000);
 
+      // Call the smart contract function to create the party
       const tx = await contract.createWatchParty(
         title,
         partyTimestamp,
         movieList
       );
-      await tx.wait();
+      const receipt = await tx.wait(); // Wait for the transaction to be mined
 
-      // Log the movie list to the console
+      // Assuming that createWatchParty returns the party ID
+      const createdPartyId = receipt.events[0].args[0].toNumber();
+      setPartyId(createdPartyId);
+
+      // Log the party details to the console
       console.log("Created Party Details:", {
         title,
         partyTime: partyTimestamp,
         movieOptions: movieList,
+        partyId: createdPartyId,
       });
-      alert("Party created successfully!");
-      // Optionally navigate to party list
-      // navigate("/party-list");
+
+      alert(`Party created successfully! Party ID: ${createdPartyId}`);
+      // Optionally navigate to another page, e.g., party list
+      navigate("/party-list");
     } catch (error) {
       console.error("Error creating party:", error);
+      alert("Failed to create the party. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -86,6 +101,7 @@ const CreateParty = () => {
           {loading ? "Creating..." : "Create Party"}
         </button>
       </form>
+      {partyId && <p>Party Created! ID: {partyId}</p>}
     </div>
   );
 };
