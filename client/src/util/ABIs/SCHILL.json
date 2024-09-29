@@ -1,5 +1,5 @@
 {
-  "address": "0x8911c0889252dcf9862256feb89Ed0Fa7d3c1fd4",
+  "address": "0x5362d3E9A59aE8265590871D5E5cCcb1475d99C8",
   "abi": [
     {
       "inputs": [
@@ -405,6 +405,61 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getAllParties",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "partyTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "host",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "active",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "partyClosed",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "winningMovie",
+              "type": "string"
+            },
+            {
+              "internalType": "string[]",
+              "name": "movieOptions",
+              "type": "string[]"
+            }
+          ],
+          "internalType": "struct ScrollChill.WatchPartyView[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -445,6 +500,25 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "participant",
+          "type": "address"
+        }
+      ],
+      "name": "mintNFTForParty",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -664,55 +738,6 @@
       "name": "voteForMovie",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "watchParties",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "partyTime",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "host",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "active",
-          "type": "bool"
-        },
-        {
-          "internalType": "bool",
-          "name": "partyClosed",
-          "type": "bool"
-        },
-        {
-          "internalType": "string",
-          "name": "winningMovie",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     }
   ]

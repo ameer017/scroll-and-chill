@@ -21,7 +21,20 @@ contract ScrollChill is ERC721 {
         string winningMovie;
     }
 
-    mapping(uint256 => WatchParty) public watchParties;
+    struct WatchPartyView {
+        uint256 id;
+        string title;
+        uint256 partyTime;
+        address host;
+        bool active;
+        bool partyClosed;
+        string winningMovie;
+        string[] movieOptions;
+
+    }
+
+    mapping(uint256 => WatchParty) private watchParties; 
+    uint256[] private partyIds;
 
     event WatchPartyCreated(
         uint256 partyId,
@@ -39,16 +52,7 @@ contract ScrollChill is ERC721 {
     }
 
     function generatePartyId() internal view returns (uint256) {
-        return
-            uint256(
-                keccak256(
-                    abi.encodePacked(
-                        msg.sender,
-                        block.timestamp,
-                        block.prevrandao
-                    )
-                )
-            );
+        return partyIds.length + 1; 
     }
 
     function generateTokenId(
@@ -87,7 +91,27 @@ contract ScrollChill is ERC721 {
         newParty.partyClosed = false;
         newParty.movieOptions = _movieOptions;
 
+        partyIds.push(newPartyId); 
+
         emit WatchPartyCreated(newPartyId, msg.sender, _title, _partyTime);
+    }
+
+    function getAllParties() public view returns (WatchPartyView[] memory) {
+        WatchPartyView[] memory parties = new WatchPartyView[](partyIds.length);
+        for (uint256 i = 0; i < partyIds.length; i++) {
+            WatchParty storage party = watchParties[partyIds[i]];
+            parties[i] = WatchPartyView({
+                id: party.id,
+                title: party.title,
+                partyTime: party.partyTime,
+                host: party.host,
+                active: party.active,
+                partyClosed: party.partyClosed,
+                winningMovie: party.winningMovie,
+                movieOptions: party.movieOptions
+            });
+        }
+        return parties;
     }
 
     function voteForMovie(uint256 _partyId, string memory _movieTitle) public {
@@ -139,12 +163,14 @@ contract ScrollChill is ERC721 {
         return (party.winningMovie, party.votes[party.winningMovie]);
     }
 
-    function mintNFTForParty(address participant) internal returns (uint256) {
-        uint256 newTokenId = generateTokenId(participant);
+    function mintNFTForParty(address participant) public returns (uint256) {
+        return _mintNFTForParty(participant);
+    }
 
+    function _mintNFTForParty(address participant) internal returns (uint256) {
+        uint256 newTokenId = generateTokenId(participant);
         _mint(participant, newTokenId);
         emit NFTMinted(participant, newTokenId);
-
         return newTokenId;
     }
 
@@ -153,13 +179,17 @@ contract ScrollChill is ERC721 {
         address[] memory _participants,
         uint256 _rewardAmount
     ) public {
+        require(
+            _participants.length > 0,
+            "No participants to distribute rewards"
+        );
+        require(_rewardAmount > 0, "Reward amount must be greater than zero");
+
         rewardToken.transfer(_host, _rewardAmount);
 
+        uint256 rewardPerParticipant = _rewardAmount / _participants.length;
         for (uint256 i = 0; i < _participants.length; i++) {
-            rewardToken.transfer(
-                _participants[i],
-                _rewardAmount / _participants.length
-            );
+            rewardToken.transfer(_participants[i], rewardPerParticipant);
         }
     }
 }

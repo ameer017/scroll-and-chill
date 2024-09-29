@@ -2,7 +2,6 @@ import React, { createContext, useState, useEffect } from "react";
 import { ethers } from "ethers";
 import ScrollChillABI from "../util/ABIs/SCHILL.json";
 
-
 export const Web3Context = createContext();
 
 export const Web3Provider = ({ children }) => {
@@ -10,10 +9,16 @@ export const Web3Provider = ({ children }) => {
   const [signer, setSigner] = useState(null);
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState(null);
+  const [error, setError] = useState(null); // For error handling
 
   useEffect(() => {
-    if (window.ethereum) {
-      const setupWeb3 = async () => {
+    const setupWeb3 = async () => {
+      if (!window.ethereum) {
+        setError("Ethereum provider not found. Please install MetaMask.");
+        return;
+      }
+
+      try {
         const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
         setProvider(web3Provider);
 
@@ -29,13 +34,19 @@ export const Web3Provider = ({ children }) => {
           signer
         );
         setContract(contractInstance);
-      };
-      setupWeb3();
-    }
+      } catch (err) {
+        console.error("Error setting up Web3:", err);
+        setError("Failed to load Web3. Please try again.");
+      }
+    };
+
+    setupWeb3();
   }, []);
 
   return (
-    <Web3Context.Provider value={{ provider, signer, contract, account }}>
+    <Web3Context.Provider
+      value={{ provider, signer, contract, account, error }}
+    >
       {children}
     </Web3Context.Provider>
   );

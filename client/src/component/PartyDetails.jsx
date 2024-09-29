@@ -1,160 +1,158 @@
-import { useEffect, useState, useContext } from "react";
-import { ethers } from "ethers";
+import { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
-import ScrollChillNFT from "../util/ABIs/SCHILL.json";
-import { Web3Context } from "../context/Web3Context"; // Adjust the path as necessary
+import { Web3Context } from "../context/Web3Context";
 
 const PartyDetails = () => {
-  const { title } = useParams();
-  const { provider, account } = useContext(Web3Context);
+  const { id } = useParams();
+  const { contract, account } = useContext(Web3Context);
   const [party, setParty] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedMovie, setSelectedMovie] = useState("");
-  const [contract, setContract] = useState(null);
-  const contractAddress = ScrollChillNFT.address;
+  const [error, setError] = useState(null);
+  const [movieToVote, setMovieToVote] = useState("");
+  const [loadingVote, setLoadingVote] = useState(false);
+  const [loadingClose, setLoadingClose] = useState(false);
+  const [isHost, setIsHost] = useState(false);
 
-  // Effect to set up the contract instance
   useEffect(() => {
-    if (provider && account) {
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract(
-        contractAddress,
-        ScrollChillNFT.abi,
-        signer
-      );
-      setContract(contractInstance);
-    }
-  }, [provider, account]);
+    const fetchPartyDetails = async () => {
+      if (!contract) return;
 
-  // Function to fetch party details
-//   const fetchPartyDetails = async () => {
-//     if (!contract) return;
+      setLoading(true);
+      try {
+        const partiesList = await contract.getAllParties();
+        const partyData = partiesList.find((party) => party.id.toNumber() === parseInt(id));
 
-//     try {
-//       const partyDetails = await contract.watchParties(title);
-//       setParty({
-//         title: partyDetails.title,
-//         creator: partyDetails.creator,
-//         time: partyDetails.time.toNumber(),
-//         movieOptions: partyDetails.movieOptions,
-//         votes: partyDetails.votes,
-//       });
-//     } catch (error) {
-//       console.error("Error fetching party details:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-const fetchPartyDetails = async () => {
-    if (!contract) return;
+        if (partyData) {
+          const formattedParty = {
+            id: partyData.id.toNumber(),
+            title: partyData.title,
+            partyTime: partyData.partyTime.toNumber(),
+            host: partyData.host,
+            active: partyData.active,
+            partyClosed: partyData.partyClosed,
+            winningMovie: partyData.winningMovie,
+            movieOptions: partyData.movieOptions,
+            votes: partyData.votes,
+          };
 
-    try {
-        // Assuming you call the contract's method to fetch the watch party details
-        const partyDetails = await contract.watchParties(title); // title here should correspond to the partyId
-
-        // Now include the ID in the state
-        setParty({
-            id: title, // Set the ID (assuming title is the ID; adjust accordingly)
-            title: partyDetails.title,
-            creator: partyDetails.creator,
-            time: partyDetails.time.toNumber(),
-            movieOptions: partyDetails.movieOptions,
-            votes: partyDetails.votes,
-        });
-    } catch (error) {
+          setParty(formattedParty);
+          setIsHost(partyData.host.toLowerCase() === account.toLowerCase());
+        } else {
+          setError("Party not found.");
+        }
+      } catch (error) {
         console.error("Error fetching party details:", error);
-    } finally {
+        setError("Could not fetch party details. Please try again later.");
+      } finally {
         setLoading(false);
-    }
-};
+      }
+    };
 
+    fetchPartyDetails();
+  }, [contract, id, account]);
 
-  // Effect to fetch party details when contract and title are available
-  useEffect(() => {
-    if (contract && title) {
-      fetchPartyDetails();
-    }
-  }, [contract, title]);
+  const handleVote = async () => {
+    if (!contract || !movieToVote) return;
 
-  // Function to join the watch party
-  const joinParty = async () => {
-    if (!contract) return;
-
+    setLoadingVote(true);
     try {
-      const tx = await contract.joinWatchParty(title);
-      await tx.wait();
-      alert("Joined the watch party!");
-    } catch (error) {
-      console.error("Error joining party:", error);
-    }
-  };
-
-  // Function to vote for a movie
-  const voteForMovie = async () => {
-    if (!contract || !selectedMovie) return;
-
-    try {
-      const tx = await contract.voteForMovie(title, selectedMovie); // Use `title` instead of `partyId`
-      await tx.wait();
-      alert("Voted for movie!");
+      const transaction = await contract.voteForMovie(party.id, movieToVote);
+      await transaction.wait();
+      alert("Vote cast successfully!");
+      setMovieToVote("");
     } catch (error) {
       console.error("Error voting for movie:", error);
+      alert("Failed to cast vote. Please try again.");
+    } finally {
+      setLoadingVote(false);
     }
   };
 
-  // Function to format the date
-  const formatDate = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleString();
+  const handleCloseParty = async () => {
+    if (!contract) return;
+
+    setLoadingClose(true);
+    try {
+      const transaction = await contract.closeWatchParty(party.id);
+      await transaction.wait();
+      alert("Party closed successfully!");
+    } catch (error) {
+      console.error("Error closing party:", error);
+      alert("Failed to close party. Please try again.");
+    } finally {
+      setLoadingClose(false);
+    }
   };
 
+  if (loading) {
+    return <p>Loading party details...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
+
+  if (!party) {
+    return <p>No party found.</p>;
+  }
+
   return (
-    <div className="party-details-container p-8">
-      {loading ? (
-        <p>Loading party details...</p>
-      ) : party ? (
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-3xl font-bold">{party.title}</h2>
-          <p className="text-gray-600">Created by: {party.creator}</p>
-          <p className="text-gray-600">Time: {formatDate(party.time)}</p>
-
-          <h3 className="mt-4 font-semibold text-lg">Movie Options:</h3>
-          <ul className="list-disc list-inside ml-4">
-            {party.movieOptions.map((movie, index) => (
-              <li key={index}>{movie}</li>
-            ))}
-          </ul>
-
-          <h4 className="mt-6 font-semibold text-lg">Vote for a Movie:</h4>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">{party.title}</h1>
+      <p className="text-gray-700">Host: {party.host}</p>
+      <p className="text-gray-500">
+        Party Time: {new Date(party.partyTime * 1000).toLocaleString()}
+      </p>
+      <p
+        className={`font-bold ${
+          party.active ? "text-green-500" : "text-red-500"
+        }`}
+      >
+        Status: {party.active ? "Active" : "Closed"}
+      </p>
+      {party.winningMovie && (
+        <p className="text-gray-500">
+          Winning Movie: {party.winningMovie}
+        </p>
+      )}
+      {party.movieOptions && party.movieOptions.length > 0 && (
+        <div className="mt-4">
+          <h2 className="text-lg font-semibold">Vote for a Movie:</h2>
           <select
-            className="mt-2 p-2 border rounded"
-            value={selectedMovie}
-            onChange={(e) => setSelectedMovie(e.target.value)}
+            value={movieToVote}
+            onChange={(e) => setMovieToVote(e.target.value)}
+            className="border rounded p-2"
           >
-            <option value="">Select a Movie</option>
+            <option value="">Select a movie</option>
             {party.movieOptions.map((movie, index) => (
               <option key={index} value={movie}>
                 {movie}
               </option>
             ))}
           </select>
-
           <button
-            className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
-            onClick={voteForMovie}
+            onClick={handleVote}
+            disabled={loadingVote || !party.active || party.partyClosed}
+            className={`ml-2 p-2 rounded bg-blue-500 text-white ${
+              loadingVote ? "opacity-50" : ""
+            }`}
           >
-            Submit Vote
-          </button>
-
-          <button
-            className="mt-6 px-4 py-2 bg-blue-500 text-white rounded"
-            onClick={joinParty}
-          >
-            Join Watch Party
+            {loadingVote ? "Voting..." : "Vote"}
           </button>
         </div>
-      ) : (
-        <p>Watch party not found.</p>
+      )}
+      {isHost && party.active && (
+        <div className="mt-4">
+          <button
+            onClick={handleCloseParty}
+            disabled={loadingClose}
+            className={`p-2 rounded bg-red-500 text-white ${
+              loadingClose ? "opacity-50" : ""
+            }`}
+          >
+            {loadingClose ? "Closing..." : "Close Party"}
+          </button>
+        </div>
       )}
     </div>
   );
