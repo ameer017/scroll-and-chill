@@ -12,6 +12,12 @@ const PartyDetails = () => {
   const [loadingVote, setLoadingVote] = useState(false);
   const [loadingClose, setLoadingClose] = useState(false);
   const [isHost, setIsHost] = useState(false);
+  const [winningMovie, setWinningMovie] = useState("");
+  const [voteCount, setVoteCount] = useState(0);
+  const [loadingCheckVotes, setLoadingCheckVotes] = useState(false);
+  const [loadingMintNFT, setLoadingMintNFT] = useState(false);
+  const [loadingDistributeRewards, setLoadingDistributeRewards] =
+    useState(false);
 
   useEffect(() => {
     const fetchPartyDetails = async () => {
@@ -20,7 +26,9 @@ const PartyDetails = () => {
       setLoading(true);
       try {
         const partiesList = await contract.getAllParties();
-        const partyData = partiesList.find((party) => party.id.toNumber() === parseInt(id));
+        const partyData = partiesList.find(
+          (party) => party.id.toNumber() === parseInt(id)
+        );
 
         if (partyData) {
           const formattedParty = {
@@ -59,6 +67,20 @@ const PartyDetails = () => {
       const transaction = await contract.voteForMovie(party.id, movieToVote);
       await transaction.wait();
       alert("Vote cast successfully!");
+
+      const updatedParty = await contract.getPartyDetails(party.id);
+      const formattedUpdatedParty = {
+        id: updatedParty.id.toNumber(),
+        title: updatedParty.title,
+        partyTime: updatedParty.partyTime.toNumber(),
+        host: updatedParty.host,
+        active: updatedParty.active,
+        partyClosed: updatedParty.partyClosed,
+        winningMovie: updatedParty.winningMovie,
+        movieOptions: updatedParty.movieOptions,
+        votes: updatedParty.votes,
+      };
+      setParty(formattedUpdatedParty);
       setMovieToVote("");
     } catch (error) {
       console.error("Error voting for movie:", error);
@@ -81,6 +103,59 @@ const PartyDetails = () => {
       alert("Failed to close party. Please try again.");
     } finally {
       setLoadingClose(false);
+    }
+  };
+
+  const handleCheckVotes = async () => {
+    if (!contract) return;
+
+    setLoadingCheckVotes(true);
+    try {
+      const result = await contract.checkVotes(party.id);
+      console.log("Check Votes Result:", result);
+      setWinningMovie(result[0]);
+      setVoteCount(result[1].toNumber());
+    } catch (error) {
+      console.error("Error checking votes:", error);
+      alert("Failed to check votes. Please try again.");
+    } finally {
+      setLoadingCheckVotes(false);
+    }
+  };
+
+  const handleMintNFT = async () => {
+    if (!contract) return;
+
+    setLoadingMintNFT(true);
+    try {
+      const transaction = await contract.mintNFTForParty(account);
+      await transaction.wait();
+      alert("NFT minted successfully!");
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      alert("Failed to mint NFT. Please try again.");
+    } finally {
+      setLoadingMintNFT(false);
+    }
+  };
+
+  const handleDistributeRewards = async (participants, rewardAmount) => {
+    if (!contract) return;
+
+    setLoadingDistributeRewards(true);
+    try {
+      const transaction = await contract.distributeRewards(
+        party.host,
+        participants,
+        rewardAmount
+      );
+      await transaction.wait();
+      alert("Rewards distributed successfully!");
+    } catch (error) {
+      console.error("Error distributing rewards:", error);
+      alert("Failed to distribute rewards. Please try again.");
+    } finally {
+      setLoadingDistributeRewards(false);
     }
   };
 
@@ -111,9 +186,7 @@ const PartyDetails = () => {
         Status: {party.active ? "Active" : "Closed"}
       </p>
       {party.winningMovie && (
-        <p className="text-gray-500">
-          Winning Movie: {party.winningMovie}
-        </p>
+        <p className="text-gray-500">Winning Movie: {party.winningMovie}</p>
       )}
       {party.movieOptions && party.movieOptions.length > 0 && (
         <div className="mt-4">
@@ -151,6 +224,55 @@ const PartyDetails = () => {
             }`}
           >
             {loadingClose ? "Closing..." : "Close Party"}
+          </button>
+        </div>
+      )}
+      {party.partyClosed && (
+        <div className="mt-4">
+          <button
+            onClick={handleCheckVotes}
+            disabled={loadingCheckVotes}
+            className={`p-2 rounded bg-green-500 text-white ${
+              loadingCheckVotes ? "opacity-50" : ""
+            }`}
+          >
+            {loadingCheckVotes ? "Checking..." : "Check Votes"}
+          </button>
+          {winningMovie && (
+            <p className="mt-2">
+              Winning Movie: {winningMovie} with {voteCount} votes
+            </p>
+          )}
+        </div>
+      )}
+      {isHost && (
+        <div className="mt-4">
+          {/* <button
+            onClick={handleMintNFT}
+            disabled={loadingMintNFT}
+            className={`p-2 rounded bg-purple-500 text-white ${
+              loadingMintNFT ? "opacity-50" : ""
+            }`}
+          >
+            {loadingMintNFT ? "Minting..." : "Mint NFT"}
+          </button> */}
+          <button
+            onClick={() =>
+              handleDistributeRewards(
+                [
+                  /* participants' addresses */
+                ],
+                100
+              )
+            }
+            disabled={loadingDistributeRewards}
+            className={`ml-2 p-2 rounded bg-orange-500 text-white ${
+              loadingDistributeRewards ? "opacity-50" : ""
+            }`}
+          >
+            {loadingDistributeRewards
+              ? "Distributing..."
+              : "Distribute Rewards"}
           </button>
         </div>
       )}

@@ -28,6 +28,7 @@ const PartyList = () => {
         }));
 
         setParties(formattedParties);
+        console.log(parties)
       } catch (error) {
         console.error("Error fetching watch parties:", error);
         setFetchError("Could not fetch parties. Please try again later.");
