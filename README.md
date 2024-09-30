@@ -12,7 +12,7 @@ The **Scroll and Chill** allows users to host, participate in, and vote on movie
 
 ## Video Demo
 
-[![Watch Party Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Watch Party Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtu.be/o6YlHePRAC8)
 
 _Click the image above to watch the demo video showcasing the functionalities of the watch party application._
 
