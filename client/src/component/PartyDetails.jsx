@@ -191,29 +191,38 @@ const PartyDetails = () => {
       {party.movieOptions && party.movieOptions.length > 0 && (
         <div className="mt-4">
           <h2 className="text-lg font-semibold">Vote for a Movie:</h2>
-          <select
-            value={movieToVote}
-            onChange={(e) => setMovieToVote(e.target.value)}
-            className="border rounded p-2"
-          >
-            <option value="">Select a movie</option>
-            {party.movieOptions.map((movie, index) => (
-              <option key={index} value={movie}>
-                {movie}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleVote}
-            disabled={loadingVote || !party.active || party.partyClosed}
-            className={`ml-2 p-2 rounded bg-blue-500 text-white ${
-              loadingVote ? "opacity-50" : ""
-            }`}
-          >
-            {loadingVote ? "Voting..." : "Vote"}
-          </button>
+          {!party.partyClosed ? (
+            <>
+              <select
+                value={movieToVote}
+                onChange={(e) => setMovieToVote(e.target.value)}
+                className="border rounded p-2"
+              >
+                <option value="">Select a movie</option>
+                {party.movieOptions.map((movie, index) => (
+                  <option key={index} value={movie}>
+                    {movie}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleVote}
+                disabled={loadingVote || !party.active || party.partyClosed}
+                className={`ml-2 p-2 rounded bg-blue-500 text-white ${
+                  loadingVote ? "opacity-50" : ""
+                }`}
+              >
+                {loadingVote ? "Voting..." : "Vote"}
+              </button>
+            </>
+          ) : (
+            <p className="text-red-500 mt-2">
+              Voting has been closed for this party.
+            </p>
+          )}
         </div>
       )}
+
       {isHost && party.active && (
         <div className="mt-4">
           <button
@@ -243,37 +252,6 @@ const PartyDetails = () => {
               Winning Movie: {winningMovie} with {voteCount} votes
             </p>
           )}
-        </div>
-      )}
-      {isHost && (
-        <div className="mt-4">
-          {/* <button
-            onClick={handleMintNFT}
-            disabled={loadingMintNFT}
-            className={`p-2 rounded bg-purple-500 text-white ${
-              loadingMintNFT ? "opacity-50" : ""
-            }`}
-          >
-            {loadingMintNFT ? "Minting..." : "Mint NFT"}
-          </button> */}
-          <button
-            onClick={() =>
-              handleDistributeRewards(
-                [
-                  /* participants' addresses */
-                ],
-                100
-              )
-            }
-            disabled={loadingDistributeRewards}
-            className={`ml-2 p-2 rounded bg-orange-500 text-white ${
-              loadingDistributeRewards ? "opacity-50" : ""
-            }`}
-          >
-            {loadingDistributeRewards
-              ? "Distributing..."
-              : "Distribute Rewards"}
-          </button>
         </div>
       )}
     </div>
